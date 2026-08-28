@@ -9,6 +9,7 @@ from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 
 from reviews_api import get_product_rating
 
@@ -16,8 +17,19 @@ load_dotenv()
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "store.db")
 
-llm = ChatGroq(model="qwen/qwen3-32b", temperature=0)
-vision_llm = ChatGroq(model="meta-llama/llama-4-scout-17b-16e-instruct", temperature=0)
+if os.getenv("GROQ_API_KEY"):
+    llm = ChatGroq(model="qwen/qwen3-32b", temperature=0)
+    vision_llm = ChatGroq(
+        model="meta-llama/llama-4-scout-17b-16e-instruct", temperature=0
+    )
+elif os.getenv("OPENAI_API_KEY"):
+    # gpt-4o-mini supports both the text agent and product-image analysis.
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    vision_llm = llm
+else:
+    raise RuntimeError(
+        "No model API key is configured. Add GROQ_API_KEY or OPENAI_API_KEY to .env."
+    )
 
 
 # ---------------------------------------------------------------------------
